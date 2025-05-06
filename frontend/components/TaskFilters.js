@@ -1,57 +1,31 @@
 import { useState } from 'react';
-import TaskList from './TaskList';
-import axios from '../utils/api';
 
-export default function TaskFilters({ setFilters, showResults = false }) {
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [priority, setPriority] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [tasks, setTasks] = useState([]);
+export default function TaskFilters({ onSearch }) {
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState({ status: '', priority: '', dueDate: '' });
 
-  const applyFilters = async (e) => {
-    if (e) e.preventDefault();
-    const filterObj = { search, status, priority, dueDate };
-    if (showResults) {
-      const { data } = await axios.get('/api/tasks', { params: filterObj });
-      setTasks(data);
-    } else if (setFilters) {
-      setFilters(filterObj);
-    }
+  const handleSubmit = e => {
+    e.preventDefault();
+    onSearch({ q: query, ...filters });
   };
 
   return (
-    <div>
-      <form onSubmit={applyFilters} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 400, margin: "2rem auto" }}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <label style={{ width: 100 }}>Search:</label>
-          <input value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <label style={{ width: 100 }}>Status:</label>
-          <select value={status} onChange={e => setStatus(e.target.value)} style={{ flex: 1 }}>
-            <option value="">All</option>
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <label style={{ width: 100 }}>Priority:</label>
-          <select value={priority} onChange={e => setPriority(e.target.value)} style={{ flex: 1 }}>
-            <option value="">All</option>
-            <option value="Low">Low</option>
-            <option value="Normal">Normal</option>
-            <option value="High">High</option>
-          </select>
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <label style={{ width: 100 }}>Due Date:</label>
-          <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ flex: 1 }} />
-        </div>
-        <button type="submit">Filter</button>
-      </form>
-      {showResults && <TaskList tasks={tasks} />}
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input placeholder="Title or Description" value={query}
+        onChange={e => setQuery(e.target.value)} />
+      <select value={filters.status}
+        onChange={e => setFilters({ ...filters, status: e.target.value })}>
+        <option value="">Status</option>
+        <option>Pending</option><option>In Progress</option><option>Completed</option>
+      </select>
+      <select value={filters.priority}
+        onChange={e => setFilters({ ...filters, priority: e.target.value })}>
+        <option value="">Priority</option>
+        <option>Low</option><option>Medium</option><option>High</option>
+      </select>
+      <input type="date" value={filters.dueDate}
+        onChange={e => setFilters({ ...filters, dueDate: e.target.value })} />
+      <button type="submit">Search</button>
+    </form>
   );
 }
