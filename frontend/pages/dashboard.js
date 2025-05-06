@@ -28,15 +28,15 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: 800, margin: '30px auto' }}>
-      <h2>Welcome, {user?.name}</h2>
+      <h2>Task Dashboard</h2>
+      <button onClick={() => router.push('/create-task')}>Create</button>
+      <button onClick={() => router.push('/assign-task')}>Assign Task</button>
+      <button onClick={() => router.push('/search-filter')}>Search/Filter</button>
       <button onClick={() => { clearAuth(); router.push('/login'); }}>Logout</button>
       <Notification notifications={notifications} />
       <TaskList tasks={assignedTasks} title="Your Assigned Tasks" />
       <TaskList tasks={createdTasks} title="Tasks You Created" />
       <TaskList tasks={overdueTasks} title="Overdue Tasks" />
-      <button onClick={() => router.push('/create-task')}>Create Task</button>
-      <button onClick={() => router.push('/search-filter')}>Search/Filter</button>
-      <button onClick={() => router.push('/assign-task')}>Assign Task</button>
     </div>
   );
 }
