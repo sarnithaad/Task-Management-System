@@ -1,73 +1,42 @@
 import { useEffect, useState } from 'react';
-import axios from '../utils/api';
+import api from '../utils/api';
 import { useRouter } from 'next/router';
-import TaskList from '../components/TaskList';
-import TaskFilters from '../components/TaskFilters';
+import { getUser, clearAuth } from '../utils/auth';
 import Notification from '../components/Notification';
-import Link from 'next/link';
-
-const isOverdue = (dueDate) => {
-  if (!dueDate) return false;
-  const today = new Date();
-  const due = new Date(dueDate);
-  return due < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-};
+import TaskList from '../components/TaskList';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
-  const [filters, setFilters] = useState({});
   const [notifications, setNotifications] = useState([]);
   const router = useRouter();
-  const currentUserId = typeof window !== "undefined" ? localStorage.getItem('userId') : null;
+  const user = getUser();
 
   useEffect(() => {
-    async function fetchTasks() {
-      const { data } = await axios.get('/api/tasks', { params: filters });
-      setTasks(data);
+    if (!user) {
+      router.push('/login');
+      return;
     }
-    fetchTasks();
-  }, [filters]);
-
-  useEffect(() => {
-    async function fetchNotifications() {
-      const { data } = await axios.get('/api/tasks/notifications');
-      setNotifications(data);
-    }
-    fetchNotifications();
+    api.get('/tasks').then(res => setTasks(res.data));
+    api.get('/users/notifications').then(res => setNotifications(res.data));
   }, []);
 
-  const filteredTasks = tasks.filter(
-    t =>
-      t.assignedTo === currentUserId ||
-      t.createdBy === currentUserId ||
-      isOverdue(t.dueDate)
+  const overdueTasks = tasks.filter(
+    t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'Completed'
   );
-
-  const handleUpdate = async (id, updates) => {
-    await axios.put(`/api/tasks/${id}`, updates);
-    setTasks(tasks.map(t => t._id === id ? { ...t, ...updates } : t));
-  };
-
-  const handleDelete = async (id) => {
-    await axios.delete(`/api/tasks/${id}`);
-    setTasks(tasks.filter(t => t._id !== id));
-  };
+  const createdTasks = tasks.filter(t => t.createdBy === user?.id);
+  const assignedTasks = tasks.filter(t => t.assignedTo === user?.id);
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-      <h2>Task Dashboard</h2>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        <Link href="/create-task"><button>Create</button></Link>
-        <Link href="/assign-task"><button>Assign Task</button></Link>
-        <Link href="/search-filter"><button>Search/Filter</button></Link>
-      </div>
+    <div style={{ maxWidth: 800, margin: '30px auto' }}>
+      <h2>Welcome, {user?.name}</h2>
+      <button onClick={() => { clearAuth(); router.push('/login'); }}>Logout</button>
       <Notification notifications={notifications} />
-      <TaskFilters setFilters={setFilters} />
-      <TaskList
-        tasks={filteredTasks}
-        onUpdate={handleUpdate}
-        onDelete={handleDelete}
-      />
+      <TaskList tasks={assignedTasks} title="Your Assigned Tasks" />
+      <TaskList tasks={createdTasks} title="Tasks You Created" />
+      <TaskList tasks={overdueTasks} title="Overdue Tasks" />
+      <button onClick={() => router.push('/create-task')}>Create Task</button>
+      <button onClick={() => router.push('/search-filter')}>Search/Filter</button>
+      <button onClick={() => router.push('/assign-task')}>Assign Task</button>
     </div>
   );
 }
