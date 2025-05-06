@@ -1,12 +1,12 @@
 const express = require('express');
-const User = require('../models/User');
-const auth = require('../middleware/auth');
 const router = express.Router();
+const auth = require('../middleware/auth');
+const Notification = require('../models/Notification');
 
-// Get all users (for task assignment)
-router.get('/', auth, async (req, res) => {
-  const users = await User.find({}, 'name email');
-  res.json(users);
+// Get notifications for logged-in user
+router.get('/notifications', auth, async (req, res) => {
+  const notifications = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 });
+  res.json(notifications);
 });
 
 module.exports = router;
