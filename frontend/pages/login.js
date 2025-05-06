@@ -1,55 +1,33 @@
 import { useState } from 'react';
+import api from '../utils/api';
 import { useRouter } from 'next/router';
-import axios from '../utils/api';
+import { setAuth } from '../utils/auth';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
-
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
-    setLoading(true);
     try {
-      const { data } = await axios.post('/api/auth/login', form);
-      localStorage.setItem('token', data.token);
+      const res = await api.post('/auth/login', form);
+      setAuth(res.data.token, res.data.user);
       router.push('/dashboard');
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Login failed. Please try again.'
-      );
+      setError(err.response?.data?.msg || 'Login failed');
     }
-    setLoading(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ textAlign: "center", marginTop: "2rem" }}>
+    <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: '100px auto' }}>
       <h2>Login</h2>
-      <input
-        name="email"
-        type="email"
-        placeholder="Email"
-        required
-        onChange={handleChange}
-        value={form.email}
-      /><br /><br />
-      <input
-        name="password"
-        type="password"
-        placeholder="Password"
-        required
-        onChange={handleChange}
-        value={form.password}
-      /><br /><br />
-      <button type="submit" disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
-      </button>
+      <input placeholder="Email" type="email" required value={form.email}
+        onChange={e => setForm({ ...form, email: e.target.value })} />
+      <input placeholder="Password" type="password" required value={form.password}
+        onChange={e => setForm({ ...form, password: e.target.value })} />
+      <button type="submit">Login</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </form>
   );
