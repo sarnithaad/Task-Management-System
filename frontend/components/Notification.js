@@ -1,12 +1,13 @@
 export default function Notification({ notifications }) {
-    return (
-      <div>
-        {notifications.map((note, idx) => (
-          <div key={idx} style={{ background: '#fffae6', padding: '8px', margin: '4px 0' }}>
-            {note.message}
-          </div>
+  if (!Array.isArray(notifications) || notifications.length === 0) return null;
+  return (
+    <div style={{ background: "#f9f9f9", padding: 10, borderRadius: 6, marginBottom: 18 }}>
+      <h4>Notifications</h4>
+      <ul>
+        {notifications.map((n, i) => (
+          <li key={i}>{n.message}</li>
         ))}
-      </div>
-    );
-  }
-  
+      </ul>
+    </div>
+  );
+}
