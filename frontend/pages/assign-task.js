@@ -1,45 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from '../utils/api';
 import { useRouter } from 'next/router';
 
 export default function AssignTask() {
   const [users, setUsers] = useState([]);
-  const [task, setTask] = useState({ title: '', description: '', dueDate: '', priority: '', assignee: '' });
+  const [tasks, setTasks] = useState([]);
+  const [selectedTask, setSelectedTask] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchUsers() {
-      const { data } = await axios.get('/api/users');
-      setUsers(data);
+    async function fetchData() {
+      const usersRes = await axios.get('/api/users');
+      setUsers(usersRes.data);
+      const tasksRes = await axios.get('/api/tasks');
+      setTasks(tasksRes.data);
     }
-    fetchUsers();
+    fetchData();
   }, []);
 
-  const handleChange = e => setTask({ ...task, [e.target.name]: e.target.value });
-
-  const handleSubmit = async e => {
+  const handleAssign = async (e) => {
     e.preventDefault();
-    await axios.post('/api/tasks/assign', task);
+    await axios.post('/api/tasks/assign', { taskId: selectedTask, userId: selectedUser });
     router.push('/dashboard');
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleAssign} style={{ maxWidth: 400, margin: "5vh auto", padding: 32, border: "1px solid #eee", borderRadius: 8 }}>
       <h2>Assign Task</h2>
-      <input name="title" placeholder="Title" required onChange={handleChange} />
-      <input name="description" placeholder="Description" required onChange={handleChange} />
-      <input name="dueDate" type="date" required onChange={handleChange} />
-      <select name="priority" required onChange={handleChange}>
-        <option value="">Priority</option>
-        <option value="Low">Low</option>
-        <option value="Normal">Normal</option>
-        <option value="High">High</option>
-      </select>
-      <select name="assignee" required onChange={handleChange}>
-        <option value="">Assign To</option>
-        {users.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
-      </select>
-      <button type="submit">Assign</button>
+      <div style={{ marginBottom: 12 }}>
+        <label>Task: </label>
+        <select value={selectedTask} onChange={e => setSelectedTask(e.target.value)} required>
+          <option value="">Select Task</option>
+          {tasks.map(task => (
+            <option key={task._id} value={task._id}>{task.title}</option>
+          ))}
+        </select>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label>User: </label>
+        <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)} required>
+          <option value="">Select User</option>
+          {users.map(user => (
+            <option key={user._id} value={user._id}>{user.name} ({user.email})</option>
+          ))}
+        </select>
+      </div>
+      <button type="submit" style={{ width: "100%" }}>Assign</button>
     </form>
   );
 }
