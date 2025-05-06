@@ -1,17 +1,12 @@
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export default function Home() {
+  const router = useRouter();
   return (
-    <div style={{ textAlign: "center", marginTop: "2rem" }}>
-      <h1>Welcome to the Task Management System</h1>
-      <div style={{ marginTop: "2rem" }}>
-        <Link href="/register">
-          <button style={{ marginRight: "1rem" }}>Register</button>
-        </Link>
-        <Link href="/login">
-          <button>Login</button>
-        </Link>
-      </div>
+    <div style={{ textAlign: 'center', marginTop: 100 }}>
+      <h1>Welcome to Task Management System</h1>
+      <button onClick={() => router.push('/register')}>Register</button>
+      <button onClick={() => router.push('/login')}>Login</button>
     </div>
   );
 }
