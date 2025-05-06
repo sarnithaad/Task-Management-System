@@ -1,21 +1,19 @@
 import TaskForm from '../components/TaskForm';
+import api from '../utils/api';
 import { useRouter } from 'next/router';
-import axios from '../utils/api';
-
 
 export default function CreateTask() {
   const router = useRouter();
 
-  const handleCreate = async (task) => {
-    const currentUserId = localStorage.getItem('userId');
-    await axios.post('/api/tasks', { ...task, createdBy: currentUserId });
+  const handleSubmit = async (form) => {
+    await api.post('/tasks', form);
     router.push('/dashboard');
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: "5vh auto" }}>
+    <div style={{ maxWidth: 400, margin: '100px auto' }}>
       <h2>Create Task</h2>
-      <TaskForm onSubmit={handleCreate} />
+      <TaskForm onSubmit={handleSubmit} />
     </div>
   );
 }
