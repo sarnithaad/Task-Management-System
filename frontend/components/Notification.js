@@ -1,11 +1,11 @@
 export default function Notification({ notifications }) {
-  if (!Array.isArray(notifications) || notifications.length === 0) return null;
+  if (!notifications || notifications.length === 0) return null;
   return (
-    <div style={{ background: "#f9f9f9", padding: 10, borderRadius: 6, marginBottom: 18 }}>
+    <div>
       <h4>Notifications</h4>
       <ul>
-        {notifications.map((n, i) => (
-          <li key={i}>{n.message}</li>
+        {notifications.map(n => (
+          <li key={n._id}>{n.message} {n.read ? '' : <b>(new)</b>}</li>
         ))}
       </ul>
     </div>
