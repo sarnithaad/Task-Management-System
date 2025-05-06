@@ -1,65 +1,73 @@
 const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
 const Task = require('../models/Task');
 const Notification = require('../models/Notification');
-const auth = require('../middleware/auth');
-const router = express.Router();
 
-// Create Task
-router.post('/', auth, async (req, res) => {
-  const { title, description, dueDate, priority, status } = req.body;
-  const task = await Task.create({ title, description, dueDate, priority, status, creator: req.user._id, assignee: req.user._id });
-  res.status(201).json(task);
-});
-
-// Read Tasks (with search & filtering)
+// Get all tasks assigned to or created by user
 router.get('/', auth, async (req, res) => {
-  const { search, status, priority, dueDate } = req.query;
-  let query = {
-    $or: [{ creator: req.user._id }, { assignee: req.user._id }]
-  };
-  if (search) query.$or.push({ title: { $regex: search, $options: 'i' } }, { description: { $regex: search, $options: 'i' } });
-  if (status) query.status = status;
-  if (priority) query.priority = priority;
-  if (dueDate) query.dueDate = { $lte: new Date(dueDate) };
-  const tasks = await Task.find(query).populate('assignee creator', 'name email');
+  const tasks = await Task.find({
+    $or: [{ assignedTo: req.user.id }, { createdBy: req.user.id }]
+  });
   res.json(tasks);
 });
 
-// Update Task
-router.put('/:id', auth, async (req, res) => {
-  const task = await Task.findById(req.params.id);
-  if (!task) return res.status(404).json({ message: 'Task not found' });
-  if (!task.creator.equals(req.user._id) && !task.assignee.equals(req.user._id))
-    return res.status(403).json({ message: 'Forbidden' });
-  Object.assign(task, req.body);
-  await task.save();
-  res.json(task);
-});
-
-// Delete Task
-router.delete('/:id', auth, async (req, res) => {
-  const task = await Task.findById(req.params.id);
-  if (!task) return res.status(404).json({ message: 'Task not found' });
-  if (!task.creator.equals(req.user._id)) return res.status(403).json({ message: 'Forbidden' });
-  await task.deleteOne();
-  res.json({ message: 'Deleted' });
-});
-
-// Assign Task
-router.post('/assign', auth, async (req, res) => {
-  const { title, description, dueDate, priority, assignee } = req.body;
-  const task = await Task.create({ title, description, dueDate, priority, creator: req.user._id, assignee });
-  await Notification.create({
-    user: assignee,
-    message: `You have been assigned a new task: ${title}`,
+// Create task
+router.post('/', auth, async (req, res) => {
+  const { title, description, dueDate, priority, status, assignedTo } = req.body;
+  const task = new Task({
+    title, description, dueDate, priority, status,
+    createdBy: req.user.id,
+    assignedTo: assignedTo || req.user.id
   });
+  await task.save();
+
+  // Notify assigned user if not self
+  if (assignedTo && assignedTo !== req.user.id) {
+    await Notification.create({
+      user: assignedTo,
+      message: `A new task "${title}" has been assigned to you.`
+    });
+  }
+
   res.status(201).json(task);
 });
 
-// Get notifications for logged-in user
-router.get('/notifications', auth, async (req, res) => {
-  const notes = await Notification.find({ user: req.user._id, read: false });
-  res.json(notes);
+// Update task
+router.put('/:id', auth, async (req, res) => {
+  const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(task);
+});
+
+// Delete task
+router.delete('/:id', auth, async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
+  res.json({ msg: 'Task deleted' });
+});
+
+// Assign task
+router.post('/:id/assign', auth, async (req, res) => {
+  const { userId } = req.body;
+  const task = await Task.findByIdAndUpdate(req.params.id, { assignedTo: userId }, { new: true });
+  await Notification.create({
+    user: userId,
+    message: `Task "${task.title}" has been assigned to you.`
+  });
+  res.json(task);
+});
+
+// Search/filter tasks
+router.get('/search', auth, async (req, res) => {
+  const { q, status, priority, dueDate } = req.query;
+  const filter = {
+    $or: [{ assignedTo: req.user.id }, { createdBy: req.user.id }]
+  };
+  if (q) filter.$or.push({ title: new RegExp(q, 'i') }, { description: new RegExp(q, 'i') });
+  if (status) filter.status = status;
+  if (priority) filter.priority = priority;
+  if (dueDate) filter.dueDate = { $lte: new Date(dueDate) };
+  const tasks = await Task.find(filter);
+  res.json(tasks);
 });
 
 module.exports = router;
