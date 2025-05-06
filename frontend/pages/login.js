@@ -16,7 +16,7 @@ export default function Login() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{ textAlign: "center", marginTop: "2rem" }}>
       <h2>Login</h2>
       <input name="email" type="email" placeholder="Email" required onChange={handleChange} />
       <input name="password" type="password" placeholder="Password" required onChange={handleChange} />
