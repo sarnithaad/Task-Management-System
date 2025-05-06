@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
 import axios from '../utils/api';
 import { useRouter } from 'next/router';
-import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 import TaskFilters from '../components/TaskFilters';
 import Notification from '../components/Notification';
+import Link from 'next/link';
+
+const isOverdue = (dueDate) => {
+  if (!dueDate) return false;
+  const today = new Date();
+  const due = new Date(dueDate);
+  return due < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+};
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [filters, setFilters] = useState({});
   const [notifications, setNotifications] = useState([]);
   const router = useRouter();
+  const currentUserId = typeof window !== "undefined" ? localStorage.getItem('userId') : null;
 
-  // Fetch tasks
   useEffect(() => {
     async function fetchTasks() {
       const { data } = await axios.get('/api/tasks', { params: filters });
@@ -21,7 +28,6 @@ export default function Dashboard() {
     fetchTasks();
   }, [filters]);
 
-  // Fetch notifications
   useEffect(() => {
     async function fetchNotifications() {
       const { data } = await axios.get('/api/tasks/notifications');
@@ -30,10 +36,12 @@ export default function Dashboard() {
     fetchNotifications();
   }, []);
 
-  const handleCreate = async (task) => {
-    await axios.post('/api/tasks', task);
-    setTasks([...tasks, task]);
-  };
+  const filteredTasks = tasks.filter(
+    t =>
+      t.assignedTo === currentUserId ||
+      t.createdBy === currentUserId ||
+      isOverdue(t.dueDate)
+  );
 
   const handleUpdate = async (id, updates) => {
     await axios.put(`/api/tasks/${id}`, updates);
@@ -46,14 +54,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div>
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
       <h2>Task Dashboard</h2>
-      <button onClick={() => router.push('/assign-task')}>Assign Task</button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <Link href="/create-task"><button>Create</button></Link>
+        <Link href="/assign-task"><button>Assign Task</button></Link>
+        <Link href="/search-filter"><button>Search/Filter</button></Link>
+      </div>
       <Notification notifications={notifications} />
-      <TaskForm onSubmit={handleCreate} />
       <TaskFilters setFilters={setFilters} />
       <TaskList
-        tasks={tasks}
+        tasks={filteredTasks}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
       />
