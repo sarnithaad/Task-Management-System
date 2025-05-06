@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'task-management-system-9n1wwhna5-sarnitha-a-ds-projects.vercel.app', // Change to your backend URL
+  baseURL: 'https://task-management-system-1-1ekz.onrender.com', // Change to your backend URL
 });
 
 instance.interceptors.request.use(config => {
