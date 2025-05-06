@@ -1,14 +1,18 @@
 // frontend/pages/index.js
 
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export default function Home() {
+  const router = useRouter();
+
+  const handleRegisterClick = () => {
+    router.push('/register');
+  };
+
   return (
     <div style={{ textAlign: "center", marginTop: "2rem" }}>
       <h1>Welcome to the Task Management System</h1>
-      <Link href="/register" passHref>
-        <button>Go to Register</button>
-      </Link>
+      <button onClick={handleRegisterClick}>Go to Register</button>
     </div>
   );
 }
