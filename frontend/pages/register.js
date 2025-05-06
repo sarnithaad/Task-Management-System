@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import axios from '../utils/api';
 
 export default function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', dob: '', doj: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -33,8 +33,7 @@ export default function Register() {
       <input name="name" placeholder="Name" required onChange={handleChange} /><br /><br />
       <input name="email" type="email" placeholder="Email" required onChange={handleChange} /><br /><br />
       <input name="password" type="password" placeholder="Password" required onChange={handleChange} /><br /><br />
-      <input name="dob" type="date" placeholder="Date of Birth" required onChange={handleChange} /><br /><br />
-      <input name="doj" type="date" placeholder="Date of Joining" required onChange={handleChange} /><br /><br />
+      
       <button type="submit" disabled={loading}>
         {loading ? 'Registering...' : 'Register'}
       </button>
