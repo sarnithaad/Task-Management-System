@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div style={{ textAlign: 'center', marginTop: 100 }}>
       <h1>Task Manager </h1>
-      <button onClick={() => router.push('/register')}>Register</button>
+      <button onClick={() => router.push('/register')}>Register</button><br>
       <button onClick={() => router.push('/login')}>Login</button>
     </div>
   );
