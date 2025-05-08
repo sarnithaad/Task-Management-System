@@ -8,7 +8,7 @@ export default function Home() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage: 'url("/welcome-page2.jpg")', // Use your actual image name here
+        backgroundImage: 'url("/welcomepage2.jpg")', // Use your actual image name here
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
