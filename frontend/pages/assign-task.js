@@ -10,9 +10,21 @@ const [userId, setUserId] = useState('');
 const [msg, setMsg] = useState('');
 
 useEffect(() => {
-api.get('/tasks/all').then(res => setTasks(res.data));
-api.get('/users').then(res => setUsers(res.data));
+  const currentUserId = localStorage.getItem('userId');
+  console.log('Current User ID:', currentUserId);
+
+  api.get('/tasks').then(res => {
+    console.log('Fetched tasks:', res.data);
+    const myTasks = res.data.filter(
+      t => String(t.createdBy) === String(currentUserId)
+    );
+    console.log('Filtered tasks:', myTasks);
+    setTasks(myTasks);
+  });
+
+  api.get('/users').then(res => setUsers(res.data));
 }, []);
+
 
 const handleAssign = async e => {
 e.preventDefault();
