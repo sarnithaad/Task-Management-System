@@ -1,5 +1,4 @@
-Task Management System
-A full-stack web application for efficient task management, featuring user authentication, task creation and assignment, notifications, and advanced search/filter capabilities.
+Task Management System - A full-stack web application for efficient task management, featuring user authentication, task creation and assignment, notifications, and advanced search/filter capabilities.
 
 Setup Instructions
 Backend:
