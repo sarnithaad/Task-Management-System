@@ -9,19 +9,18 @@ export default function AssignTask() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    // Get the current user's ID from localStorage
     const currentUserId = localStorage.getItem('userId');
+    console.log('Current User ID:', currentUserId);
 
-    // Fetch all tasks assigned to or created by the user
     api.get('/tasks').then(res => {
-      // Filter tasks to include only those created by the current user
+      console.log('Fetched tasks:', res.data);
       const myTasks = res.data.filter(
         t => String(t.createdBy) === String(currentUserId)
       );
+      console.log('Filtered tasks:', myTasks);
       setTasks(myTasks);
     });
 
-    // Fetch all users
     api.get('/users').then(res => setUsers(res.data));
   }, []);
 
