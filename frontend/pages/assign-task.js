@@ -9,7 +9,7 @@ export default function AssignTask() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    api.get('/tasks').then(res => setTasks(res.data));
+    api.get('/tasks/all').then(res => setTasks(res.data));
     api.get('/users').then(res => setUsers(res.data));
   }, []);
 
