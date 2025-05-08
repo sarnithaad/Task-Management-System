@@ -8,7 +8,7 @@ export default function Home() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage: 'url("/welcome-page2.jpg")',
+        backgroundImage: 'url("/welcome-page2.jpg")', // Use your actual image name here
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -17,18 +17,9 @@ export default function Home() {
         justifyContent: 'center',
       }}
     >
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0E2C40 0%, #1A4A5A 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
       <div
         style={{
-          background: 'rgba(255,255,255,0.92)',
+          background: 'rgba(14,44,64,0.85)', // Semi-transparent overlay for readability
           borderRadius: 20,
           padding: '48px 36px',
           boxShadow: '0 8px 32px rgba(14,44,64,0.18)',
@@ -39,7 +30,7 @@ export default function Home() {
       >
         <h1
           style={{
-            color: '#148D8D',
+            color: '#EFBC75',
             fontWeight: 800,
             marginBottom: 28,
             fontSize: 40,
