@@ -1,7 +1,7 @@
 export function setAuth(token, user) {
   localStorage.setItem('token', token);
   localStorage.setItem('user', JSON.stringify(user));
-  localStorage.setItem('userId', user._id); // <-- Store userId directly
+  localStorage.setItem('userId', user.id); 
 }
 
 export function clearAuth() {
