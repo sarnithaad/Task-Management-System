@@ -7,6 +7,19 @@ export default function Home() {
     <div
       style={{
         minHeight: '100vh',
+        width: '100vw',
+        backgroundImage: 'url("/welcome-page2.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+    <div
+      style={{
+        minHeight: '100vh',
         background: 'linear-gradient(135deg, #0E2C40 0%, #1A4A5A 100%)',
         display: 'flex',
         alignItems: 'center',
