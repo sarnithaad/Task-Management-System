@@ -30,7 +30,8 @@ router.post('/', auth, async (req, res) => {
   if (assignedTo && assignedTo !== req.user.id) {
     await Notification.create({
       user: assignedTo,
-      message: `A new task "${title}" has been assigned to you.`
+      message: `A new task "${title}" has been assigned to you.`,
+      task: task._id // <-- ADD THIS
     });
   }
 
@@ -62,7 +63,8 @@ router.patch('/:id', auth, async (req, res) => {
   if (req.body.status && String(task.createdBy) !== String(req.user.id)) {
     await Notification.create({
       user: task.createdBy,
-      message: `Status of your task "${task.title}" was changed to "${req.body.status}".`
+      message: `Status of your task "${task.title}" was changed to "${req.body.status}".`,
+      task: task._id // <-- ADD THIS
     });
   }
 
@@ -72,6 +74,8 @@ router.patch('/:id', auth, async (req, res) => {
 // Delete task
 router.delete('/:id', auth, async (req, res) => {
   await Task.findByIdAndDelete(req.params.id);
+  // Optional: Also delete related notifications
+  await Notification.deleteMany({ task: req.params.id });
   res.json({ msg: 'Task deleted' });
 });
 
@@ -81,7 +85,8 @@ router.post('/:id/assign', auth, async (req, res) => {
   const task = await Task.findByIdAndUpdate(req.params.id, { assignedTo: userId }, { new: true });
   await Notification.create({
     user: userId,
-    message: `Task "${task.title}" has been assigned to you.`
+    message: `Task "${task.title}" has been assigned to you.`,
+    task: task._id // <-- ADD THIS
   });
   res.json(task);
 });
