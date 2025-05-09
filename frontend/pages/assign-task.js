@@ -40,7 +40,7 @@ export default function AssignTask() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage: 'url("/assign-task.jpg")',
+        backgroundImage: 'url("/assigntask.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
