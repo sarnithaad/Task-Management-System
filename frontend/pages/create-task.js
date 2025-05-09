@@ -26,7 +26,7 @@ export default function CreateTask() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage: 'url("/create-task.jpg")',
+        backgroundImage: 'url("/create.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
