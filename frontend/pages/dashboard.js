@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '../utils/api';
 import { useRouter } from 'next/router';
 import { getUser, clearAuth } from '../utils/auth';
@@ -10,30 +10,60 @@ export default function Dashboard() {
   const [editingDueDate, setEditingDueDate] = useState(null);
   const [dueDateValue, setDueDateValue] = useState('');
   const [sessionNotificationIds, setSessionNotificationIds] = useState([]);
+  const initialNotificationIdsRef = useRef([]); // Store initial IDs for this session
   const router = useRouter();
   const user = getUser();
 
-  // Polling for real-time updates (simple demo)
+  // On mount, clear session notification IDs if not set
+  useEffect(() => {
+    // Clear session notification IDs on mount (new session)
+    sessionStorage.removeItem('sessionNotificationIds');
+    initialNotificationIdsRef.current = [];
+    setSessionNotificationIds([]);
+  }, []);
+
   useEffect(() => {
     if (!user) {
       router.push('/login');
       return;
     }
+
+    let firstFetch = true;
+
     const fetchData = () => {
       api.get('/tasks').then(res => setTasks(res.data));
       api.get('/users/notifications').then(res => {
         setNotifications(res.data);
 
-        // Save IDs of current notifications in sessionStorage (for NEW tag)
-        const ids = res.data.map(n => n._id);
-        sessionStorage.setItem('sessionNotificationIds', JSON.stringify(ids));
-        setSessionNotificationIds(ids);
+        const allIds = res.data.map(n => n._id);
+
+        if (firstFetch) {
+          // On first fetch after login, store the initial IDs (no "NEW" tags)
+          initialNotificationIdsRef.current = allIds;
+          setSessionNotificationIds([]);
+          sessionStorage.setItem('sessionNotificationIds', JSON.stringify([]));
+          firstFetch = false;
+        } else {
+          // For subsequent fetches, add only truly new notification IDs
+          const newIds = allIds.filter(
+            id =>
+              !initialNotificationIdsRef.current.includes(id) &&
+              !sessionNotificationIds.includes(id)
+          );
+          if (newIds.length > 0) {
+            const updatedIds = [...sessionNotificationIds, ...newIds];
+            setSessionNotificationIds(updatedIds);
+            sessionStorage.setItem('sessionNotificationIds', JSON.stringify(updatedIds));
+          }
+        }
       });
     };
+
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
-  }, []);
+    // eslint-disable-next-line
+  }, [user, router]);
 
   // Load session notification IDs from sessionStorage on mount
   useEffect(() => {
@@ -58,32 +88,27 @@ export default function Dashboard() {
       : '#7f8c8d';
 
   // Update status handler
- const handleStatusChange = async (taskId, newStatus) => {
-  await api.patch(`/tasks/${taskId}`, { status: newStatus });
-  setTasks(tasks =>
-    tasks.map(t => (t._id === taskId ? { ...t, status: newStatus } : t))
-  );
+  const handleStatusChange = async (taskId, newStatus) => {
+    await api.patch(`/tasks/${taskId}`, { status: newStatus });
+    setTasks(tasks =>
+      tasks.map(t => (t._id === taskId ? { ...t, status: newStatus } : t))
+    );
 
-  // Remove notifications related to this task if status is "Completed"
-  if (newStatus === "Completed") {
-    setNotifications(notifications =>
-      notifications.filter(n => n.task !== taskId)
-    );
-    // Update sessionNotificationIds as well
-    setSessionNotificationIds(ids =>
-      ids.filter((id, idx, arr) => {
-        const notif = notifications.find(n => n._id === id);
-        return notif && notif.task !== taskId;
-      })
-    );
-    // Also update sessionStorage
-    const updatedIds = sessionNotificationIds.filter((id, idx, arr) => {
-      const notif = notifications.find(n => n._id === id);
-      return notif && notif.task !== taskId;
-    });
-    sessionStorage.setItem('sessionNotificationIds', JSON.stringify(updatedIds));
-  }
-};
+    if (newStatus === "Completed") {
+      setNotifications(prevNotifications => {
+        const filtered = prevNotifications.filter(n => n.task !== taskId);
+
+        // Remove session "NEW" tags for notifications related to this task
+        const filteredIds = sessionNotificationIds.filter(id =>
+          filtered.some(n => n._id === id)
+        );
+        setSessionNotificationIds(filteredIds);
+        sessionStorage.setItem('sessionNotificationIds', JSON.stringify(filteredIds));
+
+        return filtered;
+      });
+    }
+  };
 
 
   // Due date edit handlers
@@ -223,8 +248,11 @@ export default function Dashboard() {
   const handleLogout = () => {
     clearAuth();
     sessionStorage.removeItem('sessionNotificationIds');
+    initialNotificationIdsRef.current = [];
+    setSessionNotificationIds([]);
     router.push('/login');
   };
+
 
   return (
     <div
