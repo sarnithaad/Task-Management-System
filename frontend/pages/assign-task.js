@@ -40,7 +40,7 @@ export default function AssignTask() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage: 'url("https://pplx-res.cloudinary.com/image/private/user_uploads/67643958/a2ee7f31-0d81-4382-9b52-7df928b6c5c1/assign-task.jpg")',
+        backgroundImage: 'url("/assign-task.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
