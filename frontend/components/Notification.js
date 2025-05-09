@@ -1,4 +1,4 @@
-export default function Notification({ notifications }) {
+export default function Notification({ notifications, sessionNotificationIds = [] }) {
   if (!notifications || notifications.length === 0) return null;
   return (
     <div style={{ margin: '24px 0' }}>
@@ -23,19 +23,18 @@ export default function Notification({ notifications }) {
               borderRadius: 8,
               padding: '10px 16px',
               marginBottom: 10,
-              fontWeight: n.read ? 500 : 700,
+              fontWeight: 500,
               fontSize: 16,
               boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              opacity: n.read ? 0.7 : 1,
               letterSpacing: 0.2,
             }}
           >
             <span>
               {n.message}
-              {!n.read && (
+              {sessionNotificationIds.includes(n._id) && (
                 <span
                   style={{
                     marginLeft: 10,
