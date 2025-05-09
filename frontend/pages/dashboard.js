@@ -189,12 +189,13 @@ export default function Dashboard() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage:
-          'url("/dashboard.jpg")',
+        backgroundImage: 'url("/dashboard.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed', // This keeps the background image fixed
         padding: '0 0 60px 0',
+        overflowY: 'auto',
       }}
     >
       <div
