@@ -58,12 +58,33 @@ export default function Dashboard() {
       : '#7f8c8d';
 
   // Update status handler
-  const handleStatusChange = async (taskId, newStatus) => {
-    await api.patch(`/tasks/${taskId}`, { status: newStatus });
-    setTasks(tasks =>
-      tasks.map(t => (t._id === taskId ? { ...t, status: newStatus } : t))
+ const handleStatusChange = async (taskId, newStatus) => {
+  await api.patch(`/tasks/${taskId}`, { status: newStatus });
+  setTasks(tasks =>
+    tasks.map(t => (t._id === taskId ? { ...t, status: newStatus } : t))
+  );
+
+  // Remove notifications related to this task if status is "Completed"
+  if (newStatus === "Completed") {
+    setNotifications(notifications =>
+      notifications.filter(n => n.task !== taskId)
     );
-  };
+    // Update sessionNotificationIds as well
+    setSessionNotificationIds(ids =>
+      ids.filter((id, idx, arr) => {
+        const notif = notifications.find(n => n._id === id);
+        return notif && notif.task !== taskId;
+      })
+    );
+    // Also update sessionStorage
+    const updatedIds = sessionNotificationIds.filter((id, idx, arr) => {
+      const notif = notifications.find(n => n._id === id);
+      return notif && notif.task !== taskId;
+    });
+    sessionStorage.setItem('sessionNotificationIds', JSON.stringify(updatedIds));
+  }
+};
+
 
   // Due date edit handlers
   const startEditingDueDate = (taskId, currentDueDate) => {
