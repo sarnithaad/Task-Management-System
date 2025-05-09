@@ -190,7 +190,7 @@ export default function Dashboard() {
         minHeight: '100vh',
         width: '100vw',
         backgroundImage:
-          'url("https://pplx-res.cloudinary.com/image/private/user_uploads/67643958/299101f6-4139-4395-86e6-15b9dc478080/dashboard.jpg")',
+          'url("/dashboard.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
