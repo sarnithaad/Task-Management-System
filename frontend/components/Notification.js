@@ -4,7 +4,7 @@ export default function Notification({ notifications, sessionNotificationIds = [
     <div style={{ margin: '24px 0' }}>
       <h4
         style={{
-          color: 'rgba(14,44,64,0.80)',
+          color: '#CFE4B9',
           fontWeight: 700,
           fontSize: 20,
           marginBottom: 10,
