@@ -38,7 +38,7 @@ export default function CreateTask() {
     >
       <div
         style={{
-          background: 'rgba(255,255,255,0.92)',
+          background: 'rgba(255,255,255,0.95)',
           borderRadius: 20,
           padding: '40px 32px',
           boxShadow: '0 8px 32px rgba(14,44,64,0.18)',
@@ -59,12 +59,20 @@ export default function CreateTask() {
         >
           Create Task
         </h2>
-        <TaskForm onSubmit={handleSubmit} loading={loading} />
-        {msg && (
-          <p style={{ color: msg.includes('success') ? '#27ae60' : '#e74c3c', marginTop: 10 }}>
-            {msg}
-          </p>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <TaskForm onSubmit={handleSubmit} loading={loading} />
+          {msg && (
+            <p style={{
+              color: msg.includes('success') ? '#27ae60' : '#e74c3c',
+              marginTop: 10,
+              fontWeight: 600,
+              fontSize: 16,
+              letterSpacing: 0.2,
+            }}>
+              {msg}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
