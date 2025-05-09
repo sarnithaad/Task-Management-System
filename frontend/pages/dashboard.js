@@ -117,16 +117,26 @@ export default function Dashboard() {
     setDueDateValue(currentDueDate ? currentDueDate.slice(0, 10) : '');
   };
 
-  const saveDueDate = async (taskId) => {
-    await api.patch(`/tasks/${taskId}`, { dueDate: dueDateValue });
-    setTasks(tasks =>
-      tasks.map(t => (t._id === taskId ? { ...t, dueDate: dueDateValue } : t))
-    );
-    setEditingDueDate(null);
-  };
+ const saveDueDate = async (taskId, newDueDate) => {
+  await api.patch(`/tasks/${taskId}`, { dueDate: newDueDate });
+  setTasks(tasks =>
+    tasks.map(t => (t._id === taskId ? { ...t, dueDate: newDueDate } : t))
+  );
+};
+
 
   // Task Card UI
-  const TaskCard = ({ task, allowStatusEdit, allowDueDateEdit }) => (
+  const TaskCard = ({ task, allowStatusEdit, allowDueDateEdit }) => {
+  // Local state for due date editing per card
+  const [isEditingDueDate, setIsEditingDueDate] = useState(false);
+  const [localDueDateValue, setLocalDueDateValue] = useState(task.dueDate ? task.dueDate.slice(0, 10) : '');
+
+  // When the task changes (e.g., due to polling), update localDueDateValue
+  useEffect(() => {
+    setLocalDueDateValue(task.dueDate ? task.dueDate.slice(0, 10) : '');
+  }, [task.dueDate]);
+
+  return (
     <div
       style={{
         background: 'rgba(255,255,255,0.85)',
@@ -177,12 +187,12 @@ export default function Dashboard() {
       </div>
       <div>
         <span style={{ fontWeight: 500 }}>Due Date: </span>
-        {allowDueDateEdit && editingDueDate === task._id ? (
+        {allowDueDateEdit && isEditingDueDate ? (
           <>
             <input
               type="date"
-              value={dueDateValue}
-              onChange={e => setDueDateValue(e.target.value)}
+              value={localDueDateValue}
+              onChange={e => setLocalDueDateValue(e.target.value)}
               style={{
                 padding: '2px 6px',
                 borderRadius: 5,
@@ -191,7 +201,10 @@ export default function Dashboard() {
               }}
             />
             <button
-              onClick={() => saveDueDate(task._id)}
+              onClick={async () => {
+                await saveDueDate(task._id, localDueDateValue);
+                setIsEditingDueDate(false);
+              }}
               style={{
                 background: '#148D8D',
                 color: '#fff',
@@ -205,7 +218,10 @@ export default function Dashboard() {
               Save
             </button>
             <button
-              onClick={() => setEditingDueDate(null)}
+              onClick={() => {
+                setIsEditingDueDate(false);
+                setLocalDueDateValue(task.dueDate ? task.dueDate.slice(0, 10) : '');
+              }}
               style={{
                 background: '#e74c3c',
                 color: '#fff',
@@ -223,7 +239,7 @@ export default function Dashboard() {
             <span>{task.dueDate ? task.dueDate.slice(0, 10) : 'Not set'}</span>
             {allowDueDateEdit && (
               <button
-                onClick={() => startEditingDueDate(task._id, task.dueDate)}
+                onClick={() => setIsEditingDueDate(true)}
                 style={{
                   marginLeft: 8,
                   background: '#EFBC75',
@@ -243,6 +259,8 @@ export default function Dashboard() {
       </div>
     </div>
   );
+};
+
 
   // Logout handler: clear session notification IDs
   const handleLogout = () => {
