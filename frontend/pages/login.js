@@ -25,7 +25,7 @@ export default function Login() {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        backgroundImage: 'url("/dashboard.jpg")', // Use your image name or Cloudinary URL
+        backgroundImage: 'url("/login.jpg")', // Use your image name or Cloudinary URL
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
