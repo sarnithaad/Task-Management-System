@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState([]);
   const [editingDueDate, setEditingDueDate] = useState(null);
   const [dueDateValue, setDueDateValue] = useState('');
+  const [sessionNotificationIds, setSessionNotificationIds] = useState([]);
   const router = useRouter();
   const user = getUser();
 
@@ -20,11 +21,24 @@ export default function Dashboard() {
     }
     const fetchData = () => {
       api.get('/tasks').then(res => setTasks(res.data));
-      api.get('/users/notifications').then(res => setNotifications(res.data));
+      api.get('/users/notifications').then(res => {
+        setNotifications(res.data);
+
+        // Save IDs of current notifications in sessionStorage (for NEW tag)
+        const ids = res.data.map(n => n._id);
+        sessionStorage.setItem('sessionNotificationIds', JSON.stringify(ids));
+        setSessionNotificationIds(ids);
+      });
     };
     fetchData();
     const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
+  }, []);
+
+  // Load session notification IDs from sessionStorage on mount
+  useEffect(() => {
+    const ids = JSON.parse(sessionStorage.getItem('sessionNotificationIds') || '[]');
+    setSessionNotificationIds(ids);
   }, []);
 
   const overdueTasks = tasks.filter(
@@ -184,6 +198,13 @@ export default function Dashboard() {
     </div>
   );
 
+  // Logout handler: clear session notification IDs
+  const handleLogout = () => {
+    clearAuth();
+    sessionStorage.removeItem('sessionNotificationIds');
+    router.push('/login');
+  };
+
   return (
     <div
       style={{
@@ -193,7 +214,7 @@ export default function Dashboard() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed', // This keeps the background image fixed
+        backgroundAttachment: 'fixed',
         padding: '0 0 60px 0',
         overflowY: 'auto',
       }}
@@ -215,9 +236,9 @@ export default function Dashboard() {
           <button onClick={() => router.push('/create-task')} style={navBtnStyle}>Create</button>
           <button onClick={() => router.push('/assign-task')} style={navBtnStyle}>Assign Task</button>
           <button onClick={() => router.push('/search-filter')} style={navBtnStyle}>Search/Filter</button>
-          <button onClick={() => { clearAuth(); router.push('/login'); }} style={navBtnStyle}>Logout</button>
+          <button onClick={handleLogout} style={navBtnStyle}>Logout</button>
         </div>
-        <Notification notifications={notifications} />
+        <Notification notifications={notifications} sessionNotificationIds={sessionNotificationIds} />
         <Section title="Your Assigned Tasks">
           {assignedTasks.length === 0 && <p style={{ color: '#fff' }}>No assigned tasks.</p>}
           {assignedTasks.map(task => (
