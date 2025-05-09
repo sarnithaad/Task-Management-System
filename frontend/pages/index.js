@@ -19,7 +19,7 @@ export default function Home() {
     >
       <div
         style={{
-          background: 'rgba(255,255,255,0.85)'
+          background: 'rgba(255,255,255)'
           borderRadius: 20,
           padding: '48px 36px',
           boxShadow: '0 8px 32px rgba(14,44,64,0.18)',
