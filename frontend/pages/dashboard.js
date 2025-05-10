@@ -201,7 +201,6 @@ function Section({ title, children }) {
     </div>
   );
 }
-
 // TaskCard component with local edit state
 function TaskCard({ task, allowStatusEdit, allowDueDateEdit, handleStatusChange, saveDueDate, statusColor }) {
   const [isEditingDueDate, setIsEditingDueDate] = useState(false);
