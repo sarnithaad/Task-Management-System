@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useRouter } from 'next/router';
 import { getUser, clearAuth } from '../utils/auth';
@@ -7,63 +7,31 @@ import Notification from '../components/Notification';
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [editingDueDate, setEditingDueDate] = useState(null);
-  const [dueDateValue, setDueDateValue] = useState('');
   const [sessionNotificationIds, setSessionNotificationIds] = useState([]);
-  const initialNotificationIdsRef = useRef([]); // Store initial IDs for this session
   const router = useRouter();
   const user = getUser();
 
-  // On mount, clear session notification IDs if not set
-  useEffect(() => {
-    // Clear session notification IDs on mount (new session)
-    sessionStorage.removeItem('sessionNotificationIds');
-    initialNotificationIdsRef.current = [];
-    setSessionNotificationIds([]);
-  }, []);
-
+  // Polling for real-time updates (simple demo)
   useEffect(() => {
     if (!user) {
       router.push('/login');
       return;
     }
-
-    let firstFetch = true;
-
     const fetchData = () => {
       api.get('/tasks').then(res => setTasks(res.data));
       api.get('/users/notifications').then(res => {
         setNotifications(res.data);
 
-        const allIds = res.data.map(n => n._id);
-
-        if (firstFetch) {
-          // On first fetch after login, store the initial IDs (no "NEW" tags)
-          initialNotificationIdsRef.current = allIds;
-          setSessionNotificationIds([]);
-          sessionStorage.setItem('sessionNotificationIds', JSON.stringify([]));
-          firstFetch = false;
-        } else {
-          // For subsequent fetches, add only truly new notification IDs
-          const newIds = allIds.filter(
-            id =>
-              !initialNotificationIdsRef.current.includes(id) &&
-              !sessionNotificationIds.includes(id)
-          );
-          if (newIds.length > 0) {
-            const updatedIds = [...sessionNotificationIds, ...newIds];
-            setSessionNotificationIds(updatedIds);
-            sessionStorage.setItem('sessionNotificationIds', JSON.stringify(updatedIds));
-          }
-        }
+        // Save IDs of current notifications in sessionStorage (for NEW tag)
+        const ids = res.data.map(n => n._id);
+        sessionStorage.setItem('sessionNotificationIds', JSON.stringify(ids));
+        setSessionNotificationIds(ids);
       });
     };
-
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
-    // eslint-disable-next-line
-  }, [user, router]);
+  }, []);
 
   // Load session notification IDs from sessionStorage on mount
   useEffect(() => {
@@ -95,10 +63,11 @@ export default function Dashboard() {
     );
 
     if (newStatus === "Completed") {
+      // Remove notifications related to this task and update sessionNotificationIds/sessionStorage
       setNotifications(prevNotifications => {
         const filtered = prevNotifications.filter(n => n.task !== taskId);
 
-        // Remove session "NEW" tags for notifications related to this task
+        // Update sessionNotificationIds and sessionStorage based on filtered notifications
         const filteredIds = sessionNotificationIds.filter(id =>
           filtered.some(n => n._id === id)
         );
@@ -110,28 +79,136 @@ export default function Dashboard() {
     }
   };
 
-
-  // Due date edit handlers
-  const startEditingDueDate = (taskId, currentDueDate) => {
-    setEditingDueDate(taskId);
-    setDueDateValue(currentDueDate ? currentDueDate.slice(0, 10) : '');
+  // Save due date handler (accepts newDueDate as argument)
+  const saveDueDate = async (taskId, newDueDate) => {
+    await api.patch(`/tasks/${taskId}`, { dueDate: newDueDate });
+    setTasks(tasks =>
+      tasks.map(t => (t._id === taskId ? { ...t, dueDate: newDueDate } : t))
+    );
   };
 
- const saveDueDate = async (taskId, newDueDate) => {
-  await api.patch(`/tasks/${taskId}`, { dueDate: newDueDate });
-  setTasks(tasks =>
-    tasks.map(t => (t._id === taskId ? { ...t, dueDate: newDueDate } : t))
+  // Logout handler: clear session notification IDs
+  const handleLogout = () => {
+    clearAuth();
+    sessionStorage.removeItem('sessionNotificationIds');
+    router.push('/login');
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        width: '100vw',
+        backgroundImage: 'url("/dashboard.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        padding: '0 0 60px 0',
+        overflowY: 'auto',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 900,
+          margin: '40px auto',
+          background: 'rgba(14,44,64,0.80)',
+          borderRadius: 20,
+          padding: '36px 28px',
+          boxShadow: '0 8px 32px #0E2C4022',
+        }}
+      >
+        <h2 style={{ color: '#EFBC75', fontWeight: 800, fontSize: 32, marginBottom: 20 }}>
+          Task Dashboard
+        </h2>
+        <div style={{ marginBottom: 20 }}>
+          <button onClick={() => router.push('/create-task')} style={navBtnStyle}>Create</button>
+          <button onClick={() => router.push('/assign-task')} style={navBtnStyle}>Assign Task</button>
+          <button onClick={() => router.push('/search-filter')} style={navBtnStyle}>Search/Filter</button>
+          <button onClick={handleLogout} style={navBtnStyle}>Logout</button>
+        </div>
+        <Notification notifications={notifications} sessionNotificationIds={sessionNotificationIds} />
+        <Section title="Your Assigned Tasks">
+          {assignedTasks.length === 0 && <p style={{ color: '#fff' }}>No assigned tasks.</p>}
+          {assignedTasks.map(task => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              allowStatusEdit={user?.id === task.assignedTo}
+              allowDueDateEdit={false}
+              handleStatusChange={handleStatusChange}
+              saveDueDate={saveDueDate}
+              statusColor={statusColor}
+            />
+          ))}
+        </Section>
+        <Section title="Tasks You Created">
+          {createdTasks.length === 0 && <p style={{ color: '#fff' }}>No tasks created.</p>}
+          {createdTasks.map(task => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              allowStatusEdit={false}
+              allowDueDateEdit={user?.id === task.createdBy}
+              handleStatusChange={handleStatusChange}
+              saveDueDate={saveDueDate}
+              statusColor={statusColor}
+            />
+          ))}
+        </Section>
+        <Section title="Overdue Tasks">
+          {overdueTasks.length === 0 && <p style={{ color: '#fff' }}>No overdue tasks. 🎉</p>}
+          {overdueTasks.map(task => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              allowStatusEdit={user?.id === task.assignedTo}
+              allowDueDateEdit={user?.id === task.createdBy}
+              handleStatusChange={handleStatusChange}
+              saveDueDate={saveDueDate}
+              statusColor={statusColor}
+            />
+          ))}
+        </Section>
+      </div>
+    </div>
   );
+}
+
+// Button style for navigation
+const navBtnStyle = {
+  marginRight: 12,
+  padding: '9px 22px',
+  borderRadius: 8,
+  border: 'none',
+  background: '#148D8D',
+  color: '#fff',
+  fontWeight: 600,
+  fontSize: 16,
+  cursor: 'pointer',
+  boxShadow: '0 2px 8px #148d8d22',
+  transition: 'background 0.2s',
 };
 
+// Section wrapper
+function Section({ title, children }) {
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <h3 style={{ color: '#C1E1A7', fontWeight: 700, fontSize: 22, marginBottom: 10 }}>
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
 
-  // Task Card UI
-  const TaskCard = ({ task, allowStatusEdit, allowDueDateEdit }) => {
-  // Local state for due date editing per card
+// TaskCard component with local edit state
+import { useState, useEffect } from 'react';
+function TaskCard({ task, allowStatusEdit, allowDueDateEdit, handleStatusChange, saveDueDate, statusColor }) {
   const [isEditingDueDate, setIsEditingDueDate] = useState(false);
   const [localDueDateValue, setLocalDueDateValue] = useState(task.dueDate ? task.dueDate.slice(0, 10) : '');
 
-  // When the task changes (e.g., due to polling), update localDueDateValue
+  // Sync local due date value with task prop if it changes (e.g., after save or polling)
   useEffect(() => {
     setLocalDueDateValue(task.dueDate ? task.dueDate.slice(0, 10) : '');
   }, [task.dueDate]);
@@ -201,6 +278,7 @@ export default function Dashboard() {
               }}
             />
             <button
+              type="button"
               onClick={async () => {
                 await saveDueDate(task._id, localDueDateValue);
                 setIsEditingDueDate(false);
@@ -218,6 +296,7 @@ export default function Dashboard() {
               Save
             </button>
             <button
+              type="button"
               onClick={() => {
                 setIsEditingDueDate(false);
                 setLocalDueDateValue(task.dueDate ? task.dueDate.slice(0, 10) : '');
@@ -239,6 +318,7 @@ export default function Dashboard() {
             <span>{task.dueDate ? task.dueDate.slice(0, 10) : 'Not set'}</span>
             {allowDueDateEdit && (
               <button
+                type="button"
                 onClick={() => setIsEditingDueDate(true)}
                 style={{
                   marginLeft: 8,
@@ -257,101 +337,6 @@ export default function Dashboard() {
           </>
         )}
       </div>
-    </div>
-  );
-};
-
-
-  // Logout handler: clear session notification IDs
-  const handleLogout = () => {
-    clearAuth();
-    sessionStorage.removeItem('sessionNotificationIds');
-    initialNotificationIdsRef.current = [];
-    setSessionNotificationIds([]);
-    router.push('/login');
-  };
-
-
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        width: '100vw',
-        backgroundImage: 'url("/dashboard.jpg")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-        padding: '0 0 60px 0',
-        overflowY: 'auto',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 900,
-          margin: '40px auto',
-          background: 'rgba(14,44,64,0.80)',
-          borderRadius: 20,
-          padding: '36px 28px',
-          boxShadow: '0 8px 32px #0E2C4022',
-        }}
-      >
-        <h2 style={{ color: '#EFBC75', fontWeight: 800, fontSize: 32, marginBottom: 20 }}>
-          Task Dashboard
-        </h2>
-        <div style={{ marginBottom: 20 }}>
-          <button onClick={() => router.push('/create-task')} style={navBtnStyle}>Create</button>
-          <button onClick={() => router.push('/assign-task')} style={navBtnStyle}>Assign Task</button>
-          <button onClick={() => router.push('/search-filter')} style={navBtnStyle}>Search/Filter</button>
-          <button onClick={handleLogout} style={navBtnStyle}>Logout</button>
-        </div>
-        <Notification notifications={notifications} sessionNotificationIds={sessionNotificationIds} />
-        <Section title="Your Assigned Tasks">
-          {assignedTasks.length === 0 && <p style={{ color: '#fff' }}>No assigned tasks.</p>}
-          {assignedTasks.map(task => (
-            <TaskCard key={task._id} task={task} allowStatusEdit />
-          ))}
-        </Section>
-        <Section title="Tasks You Created">
-          {createdTasks.length === 0 && <p style={{ color: '#fff' }}>No tasks created.</p>}
-          {createdTasks.map(task => (
-            <TaskCard key={task._id} task={task} allowDueDateEdit />
-          ))}
-        </Section>
-        <Section title="Overdue Tasks">
-          {overdueTasks.length === 0 && <p style={{ color: '#fff' }}>No overdue tasks. 🎉</p>}
-          {overdueTasks.map(task => (
-            <TaskCard key={task._id} task={task} />
-          ))}
-        </Section>
-      </div>
-    </div>
-  );
-}
-
-// Button style for navigation
-const navBtnStyle = {
-  marginRight: 12,
-  padding: '9px 22px',
-  borderRadius: 8,
-  border: 'none',
-  background: '#148D8D',
-  color: '#fff',
-  fontWeight: 600,
-  fontSize: 16,
-  cursor: 'pointer',
-  boxShadow: '0 2px 8px #148d8d22',
-  transition: 'background 0.2s',
-};
-
-// Section wrapper
-function Section({ title, children }) {
-  return (
-    <div style={{ marginBottom: 32 }}>
-      <h3 style={{ color: '#C1E1A7', fontWeight: 700, fontSize: 22, marginBottom: 10 }}>
-        {title}
-      </h3>
-      {children}
     </div>
   );
 }
