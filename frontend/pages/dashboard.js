@@ -203,7 +203,6 @@ function Section({ title, children }) {
 }
 
 // TaskCard component with local edit state
-import { useState, useEffect } from 'react';
 function TaskCard({ task, allowStatusEdit, allowDueDateEdit, handleStatusChange, saveDueDate, statusColor }) {
   const [isEditingDueDate, setIsEditingDueDate] = useState(false);
   const [localDueDateValue, setLocalDueDateValue] = useState(task.dueDate ? task.dueDate.slice(0, 10) : '');
