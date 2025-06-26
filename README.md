@@ -1,5 +1,7 @@
 Task Management System - A full-stack web application for efficient task management, featuring user authentication, task creation and assignment, notifications, and advanced search/filter capabilities.
 
+Check the live project - https://task-manager-sarnitha-a-ds-projects.vercel.app/
+
 Setup Instructions
 Backend:
 1. Clone the repository:
